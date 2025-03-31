@@ -23,6 +23,10 @@ public partial class ListaProduto : ContentPage
             List<Produto> tmp = await App.Db.GetAll();
 
             tmp.ForEach(i => lista.Add(i));
+
+            // Carregar categorias no Picker
+            var categorias = tmp.Select(p => p.Categoria).Distinct().ToList();
+            categoryPicker.ItemsSource = categorias;
         }
         catch (Exception ex)
         {
@@ -87,7 +91,7 @@ public partial class ListaProduto : ContentPage
             bool confirm = await DisplayAlert(
                 "Tem Certeza?", $"Remover {p.Descricao}?", "Sim", "Não");
 
-            if(confirm)
+            if (confirm)
             {
                 await App.Db.Delete(p.Id);
                 lista.Remove(p);
@@ -130,7 +134,32 @@ public partial class ListaProduto : ContentPage
         {
             await DisplayAlert("Ops", ex.Message, "OK");
 
-        } finally
+        }
+        finally
+        {
+            lst_produtos.IsRefreshing = false;
+        }
+    }
+
+    private async void categoryPicker_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        try
+        {
+            string categoria = categoryPicker.SelectedItem.ToString();
+
+            lst_produtos.IsRefreshing = true;
+
+            lista.Clear();
+
+            List<Produto> tmp = await App.Db.GetByCategory(categoria);
+
+            tmp.ForEach(i => lista.Add(i));
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Ops", ex.Message, "OK");
+        }
+        finally
         {
             lst_produtos.IsRefreshing = false;
         }
